@@ -84,8 +84,6 @@ Sub SplitExcelFileByColumnPSum()
     Application.DisplayAlerts = False
     
     ' Buoc 3: Xu ly du lieu va tao file con
-    Dim rowsZPOS As Long
-    Dim rowsZNEG As Long
     Dim columnLValue As String
     Dim pairSum As Double
     Dim shouldSplit As Boolean
@@ -93,8 +91,6 @@ Sub SplitExcelFileByColumnPSum()
     Dim valueZPOS As Double
     Dim valueZNEG As Double
     
-    rowsZPOS = 0
-    rowsZNEG = 0
     pairSum = 0
     valueZPOS = 0
     valueZNEG = 0
@@ -102,109 +98,78 @@ Sub SplitExcelFileByColumnPSum()
     Do While currentRow <= lastRow
         columnLValue = Trim(CStr(wsSource.Range("L" & currentRow).Value))
         
-        ' Neu gap ZPOS, luu vi tri va gia tri (chua them vao sumValue)
-        If columnLValue = "ZPOS" Then
-            rowsZPOS = currentRow
+        valueZPOS = wsSource.Range("P" & currentRow).Value
+        valueZNEG = wsSource.Range("P" & currentRow + 1).Value
+        
+        ' Tinh tong cap ZPOS-ZNEG
+        pairSum = valueZPOS + valueZNEG
+        
+        ' Thu them cap vao sumValue de kiem tra
+        Dim testSum As Double
+        testSum = sumValue + pairSum
+        
+        shouldSplit = False
+        endRowForCurrentFile = 0
+        
+        ' Kiem tra dieu kien
+        If testSum = 1400000000 Then
+            ' BANG 1.4 ty: them cap vao sum, tao file den het ZNEG
+            shouldSplit = True
+            endRowForCurrentFile = currentRow + 1
+        End If
+        
+        If testSum > 1400000000 Then
+            ' LON HON 1.4 ty: KHONG them cap vao sum, tao file den truoc ZPOS
+            shouldSplit = True
+            endRowForCurrentFile = currentRow - 1
+        End If
+        
+        ' Tao file neu can
+        If shouldSplit Then
+            ' Tao workbook moi
+            Set wbTarget = Workbooks.Add
+            Set wsTarget = wbTarget.Worksheets(1)
+            
+            ' Dat ten sheet giong sheet goc
+            wsTarget.Name = sheetName
+            
+            ' Copy header (3 dong dau luon luon)
+            wsSource.Rows("1:3").Copy wsTarget.Rows("1:3")
+            
+            ' Copy du lieu tu startRow den endRowForCurrentFile vao dong 4 cua file moi
+            wsSource.Rows(startRow & ":" & endRowForCurrentFile).Copy wsTarget.Range("A4")
+            
+            ' Dieu chinh do rong cot
+            wsTarget.Columns.AutoFit
+            
+            ' Dat ten va luu file con
+            targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
+            wbTarget.SaveAs Filename:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
+            wbTarget.Close False
+            
+            ' Thong bao tien trinh
+            Debug.Print "Da tao file: " & targetFilePath & " (Tong: " & Format(sumValue, "#,##0") & ")"
+            
+            ' Tang bo dem file
+            fileCounter = fileCounter + 1
+            
+            ' Reset cho file moi
+            startRow = endRowForCurrentFile + 1
+            sumValue = 0
+            pairSum = 0
             valueZPOS = 0
-            
-            ' Lay gia tri ZPOS
-            If IsNumeric(wsSource.Range("P" & currentRow).Value) Then
-                valueZPOS = wsSource.Range("P" & currentRow).Value
-            End If
-            
-        ' Neu gap ZNEG, tinh tong cap va kiem tra dieu kien
-        ElseIf columnLValue = "ZNEG" Then
-            rowsZNEG = currentRow
             valueZNEG = 0
-            
-            ' Lay gia tri ZNEG
-            If IsNumeric(wsSource.Range("P" & currentRow).Value) Then
-                valueZNEG = wsSource.Range("P" & currentRow).Value
-            End If
-            
-            ' Tinh tong cap ZPOS-ZNEG
-            pairSum = valueZPOS + valueZNEG
-            
-            ' Thu them cap vao sumValue de kiem tra
-            Dim testSum As Double
-            testSum = sumValue + pairSum
-            
-            shouldSplit = False
-            endRowForCurrentFile = currentRow
-            
-            ' Kiem tra dieu kien
-            If testSum = 1400000000 Then
-                ' BANG 1.4 ty: them cap vao sum, tao file den het ZNEG
-                sumValue = testSum
-                shouldSplit = True
-                endRowForCurrentFile = rowsZNEG
-                
-            ElseIf testSum > 1400000000 Then
-                ' LON HON 1.4 ty: KHONG them cap vao sum, tao file den truoc ZPOS
-                shouldSplit = True
-                endRowForCurrentFile = rowsZPOS - 1
-                
-                ' Truong hop dac biet: neu rowsZPOS - 1 < startRow
-                ' (tuc la chua co du lieu nao truoc cap ZPOS-ZNEG nay)
-                If endRowForCurrentFile < startRow Then
-                    ' Tao file chi voi cap ZPOS-ZNEG nay
-                    endRowForCurrentFile = rowsZNEG
-                    sumValue = pairSum
-                End If
-                
-            Else
-                ' Chua dat nguong: them cap vao sum, tiep tuc
-                sumValue = testSum
-            End If
-            
-            ' Tao file neu can
-            If shouldSplit And endRowForCurrentFile >= startRow Then
-                ' Tao workbook moi
-                Set wbTarget = Workbooks.Add
-                Set wsTarget = wbTarget.Worksheets(1)
-                
-                ' Dat ten sheet giong sheet goc
-                wsTarget.Name = sheetName
-                
-                ' Copy header (3 dong dau luon luon)
-                wsSource.Rows("1:3").Copy wsTarget.Rows("1:3")
-                
-                ' Copy du lieu tu startRow den endRowForCurrentFile vao dong 4 cua file moi
-                wsSource.Rows(startRow & ":" & endRowForCurrentFile).Copy wsTarget.Range("A4")
-                
-                ' Dieu chinh do rong cot
-                wsTarget.Columns.AutoFit
-                
-                ' Dat ten va luu file con
-                targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
-                wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
-                wbTarget.Close False
-                
-                ' Thong bao tien trinh
-                Debug.Print "Da tao file: " & targetFilePath & " (Tong: " & Format(sumValue, "#,##0") & ")"
-                
-                ' Tang bo dem file
-                fileCounter = fileCounter + 1
-                
-                ' Reset cho file moi
-                startRow = endRowForCurrentFile + 1
-                currentRow = endRowForCurrentFile
-                sumValue = 0
-                rowsZPOS = 0
-                rowsZNEG = 0
-                pairSum = 0
-                valueZPOS = 0
-                valueZNEG = 0
-            End If
         Else
-            ' Khong phai ZPOS hay ZNEG, cong vao sumValue binh thuong
-            If IsNumeric(wsSource.Range("P" & currentRow).Value) Then
-                sumValue = sumValue + wsSource.Range("P" & currentRow).Value
-            End If
+            ' Chua dat nguong: them cap vao sum, tiep tuc
+            sumValue = testSum
         End If
         
         ' Tang dong hien tai
-        currentRow = currentRow + 1
+        If shouldSplit Then
+            currentRow = endRowForCurrentFile + 1
+        Else
+            currentRow = currentRow + 2
+        End If
     Loop
     
     ' Xu ly phan du lieu con lai (neu co)
@@ -237,7 +202,7 @@ Sub SplitExcelFileByColumnPSum()
         
         ' Dat ten va luu file con
         targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
-        wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
+        wbTarget.SaveAs Filename:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
         wbTarget.Close False
         
         ' Thong bao tien trinh
