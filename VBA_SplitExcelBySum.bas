@@ -17,6 +17,7 @@ Sub SplitExcelFileByColumnPSum()
     Dim targetFilePath As String
     Dim sourceFolder As String
     Dim i As Long
+    Dim sourceFileName As String
     
     ' Khoi tao bien
     fileCounter = 1
@@ -42,8 +43,11 @@ Sub SplitExcelFileByColumnPSum()
     
     ' Lay thu muc chua file goc
     sourceFolder = Left(filePath, InStrRev(filePath, "\"))
-    
-    ' Buoc 2: Nhap ten sheet can xu ly
+        ' Lay ten file goc (khong co extension)
+    Dim tempFileName As String
+    tempFileName = Mid(filePath, InStrRev(filePath, "\\") + 1)
+    sourceFileName = Left(tempFileName, InStrRev(tempFileName, ".") - 1)
+        ' Buoc 2: Nhap ten sheet can xu ly
     sheetName = InputBox("Nhap ten sheet can xu ly:", "Ten Sheet")
     If sheetName = "" Then
         MsgBox "Ban chua nhap ten sheet. Chuong trinh se dung lai.", vbExclamation
@@ -139,12 +143,30 @@ Sub SplitExcelFileByColumnPSum()
             ' Copy du lieu tu startRow den endRowForCurrentFile vao dong 4 cua file moi
             wsSource.Rows(startRow & ":" & endRowForCurrentFile).Copy wsTarget.Range("A4")
             
+            ' 1. Dem so dong tu P4 den cuoi cot P co du lieu, ghi vao P2
+            Dim rowCount As Long
+            rowCount = endRowForCurrentFile - 3 ' Tru di 3 dong header
+            wsTarget.Range("P2").Value = Format(rowCount, "000000")
+            
+            ' 2. Them "_" + fileCounter vao cuoi o B2
+            If wsTarget.Range("B2").Value <> "" Then
+                wsTarget.Range("B2").Value = wsTarget.Range("B2").Value & "_" & fileCounter
+            End If
+            
+            ' 3. Them "_" + fileCounter vao tat ca o tu B4 den cuoi cot B co du lieu
+            Dim iRow As Long
+            For iRow = 4 To endRowForCurrentFile
+                If wsTarget.Range("B" & iRow).Value <> "" Then
+                    wsTarget.Range("B" & iRow).Value = wsTarget.Range("B" & iRow).Value & "_" & fileCounter
+                End If
+            Next iRow
+            
             ' Dieu chinh do rong cot
             wsTarget.Columns.AutoFit
             
             ' Dat ten va luu file con
-            targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
-            wbTarget.SaveAs Filename:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
+            targetFilePath = sourceFolder & sourceFileName & "_" & fileCounter & ".xlsx"
+            wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
             wbTarget.Close False
             
             ' Thong bao tien trinh
@@ -155,6 +177,7 @@ Sub SplitExcelFileByColumnPSum()
             
             ' Reset cho file moi
             startRow = endRowForCurrentFile + 1
+            currentRow = endRowForCurrentFile
             sumValue = 0
             pairSum = 0
             valueZPOS = 0
@@ -163,13 +186,9 @@ Sub SplitExcelFileByColumnPSum()
             ' Chua dat nguong: them cap vao sum, tiep tuc
             sumValue = testSum
         End If
-        
+
         ' Tang dong hien tai
-        If shouldSplit Then
-            currentRow = endRowForCurrentFile + 1
-        Else
-            currentRow = currentRow + 2
-        End If
+        currentRow = currentRow + 2
     Loop
     
     ' Xu ly phan du lieu con lai (neu co)
@@ -197,12 +216,30 @@ Sub SplitExcelFileByColumnPSum()
         ' Copy du lieu tu startRow den lastRow vao dong 4 cua file moi
         wsSource.Rows(startRow & ":" & lastRow).Copy wsTarget.Range("A4")
         
+        ' 1. Dem so dong tu P4 den cuoi cot P co du lieu, ghi vao P2
+        Dim rowCount2 As Long
+        rowCount2 = lastRow - 3 ' Tru di 3 dong header
+        wsTarget.Range("P2").Value = Format(rowCount2, "000000")
+        
+        ' 2. Them "_" + fileCounter vao cuoi o B2
+        If wsTarget.Range("B2").Value <> "" Then
+            wsTarget.Range("B2").Value = wsTarget.Range("B2").Value & "_" & fileCounter
+        End If
+        
+        ' 3. Them "_" + fileCounter vao tat ca o tu B4 den cuoi cot B co du lieu
+        Dim iRow2 As Long
+        For iRow2 = 4 To lastRow
+            If wsTarget.Range("B" & iRow2).Value <> "" Then
+                wsTarget.Range("B" & iRow2).Value = wsTarget.Range("B" & iRow2).Value & "_" & fileCounter
+            End If
+        Next iRow2
+        
         ' Dieu chinh do rong cot
         wsTarget.Columns.AutoFit
         
         ' Dat ten va luu file con
-        targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
-        wbTarget.SaveAs Filename:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
+        targetFilePath = sourceFolder & sourceFileName & "_" & fileCounter & ".xlsx"
+        wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
         wbTarget.Close False
         
         ' Thong bao tien trinh
