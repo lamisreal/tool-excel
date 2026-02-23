@@ -43,11 +43,13 @@ Sub SplitExcelFileByColumnPSum()
     
     ' Lay thu muc chua file goc
     sourceFolder = Left(filePath, InStrRev(filePath, "\"))
-        ' Lay ten file goc (khong co extension)
+    
+    ' Lay ten file goc (khong co extension)
     Dim tempFileName As String
-    tempFileName = Mid(filePath, InStrRev(filePath, "\\") + 1)
+    tempFileName = Mid(filePath, InStrRev(filePath, "\") + 1)
     sourceFileName = Left(tempFileName, InStrRev(tempFileName, ".") - 1)
-        ' Buoc 2: Nhap ten sheet can xu ly
+    
+    ' Buoc 2: Nhap ten sheet can xu ly
     sheetName = InputBox("Nhap ten sheet can xu ly:", "Ten Sheet")
     If sheetName = "" Then
         MsgBox "Ban chua nhap ten sheet. Chuong trinh se dung lai.", vbExclamation
