@@ -94,21 +94,21 @@ Sub SplitExcelFileByColumnPSum()
     Dim pairSum As Double
     Dim shouldSplit As Boolean
     Dim endRowForCurrentFile As Long
-    Dim valueZPOS As Double
-    Dim valueZNEG As Double
+    Dim valueRow1 As Double
+    Dim valueRow2 As Double
     
     pairSum = 0
-    valueZPOS = 0
-    valueZNEG = 0
+    valueRow1 = 0
+    valueRow2 = 0
     
     Do While currentRow <= lastRow
         columnLValue = Trim(CStr(wsSource.Range("L" & currentRow).Value))
         
-        valueZPOS = wsSource.Range("P" & currentRow).Value
-        valueZNEG = wsSource.Range("P" & currentRow + 1).Value
+        valueRow1 = wsSource.Range("P" & currentRow).Value
+        valueRow2 = wsSource.Range("P" & currentRow + 1).Value
         
         ' Tinh tong cap ZPOS-ZNEG
-        pairSum = valueZPOS + valueZNEG
+        pairSum = valueRow1 + valueRow2
         
         ' Thu them cap vao sumValue de kiem tra
         Dim testSum As Double
@@ -130,6 +130,13 @@ Sub SplitExcelFileByColumnPSum()
             endRowForCurrentFile = currentRow - 1
         End If
         
+        Dim currentLastRow As Long
+        currentLastRow = currentRow + 1
+        If currentLastRow >= lastRow Then
+            shouldSplit = True
+            endRowForCurrentFile = currentRow
+        End If
+        
         ' Tao file neu can
         If shouldSplit Then
             ' Tao workbook moi
@@ -146,8 +153,10 @@ Sub SplitExcelFileByColumnPSum()
             wsSource.Rows(startRow & ":" & endRowForCurrentFile).Copy wsTarget.Range("A4")
             
             ' 1. Dem so dong tu P4 den cuoi cot P co du lieu, ghi vao P2
+            Dim lastRowP As Long
             Dim rowCount As Long
-            rowCount = endRowForCurrentFile - 3 ' Tru di 3 dong header
+            lastRowP = wsTarget.Cells(wsTarget.Rows.Count, "P").End(xlUp).Row
+            rowCount = lastRowP - 3 ' Tru di 3 dong header
             wsTarget.Range("P2").Value = Format(rowCount, "000000")
             
             ' 2. Them "_" + fileCounter vao cuoi o B2
@@ -156,8 +165,10 @@ Sub SplitExcelFileByColumnPSum()
             End If
             
             ' 3. Them "_" + fileCounter vao tat ca o tu B4 den cuoi cot B co du lieu
+            Dim lastRowB As Long
             Dim iRow As Long
-            For iRow = 4 To endRowForCurrentFile
+            lastRowB = wsTarget.Cells(wsTarget.Rows.Count, "B").End(xlUp).Row
+            For iRow = 4 To lastRowB
                 If wsTarget.Range("B" & iRow).Value <> "" Then
                     wsTarget.Range("B" & iRow).Value = wsTarget.Range("B" & iRow).Value & "_" & fileCounter
                 End If
@@ -179,76 +190,22 @@ Sub SplitExcelFileByColumnPSum()
             
             ' Reset cho file moi
             startRow = endRowForCurrentFile + 1
-            currentRow = endRowForCurrentFile
             sumValue = 0
             pairSum = 0
-            valueZPOS = 0
-            valueZNEG = 0
+            valueRow1 = 0
+            valueRow2 = 0
         Else
             ' Chua dat nguong: them cap vao sum, tiep tuc
             sumValue = testSum
         End If
 
         ' Tang dong hien tai
-        currentRow = currentRow + 2
-    Loop
-    
-    ' Xu ly phan du lieu con lai (neu co)
-    If startRow <= lastRow Then
-        ' Tinh tong cho phan du lieu con lai
-        Dim finalSum As Double
-        Dim calcRow As Long
-        finalSum = 0
-        For calcRow = startRow To lastRow
-            If IsNumeric(wsSource.Range("P" & calcRow).Value) Then
-                finalSum = finalSum + wsSource.Range("P" & calcRow).Value
-            End If
-        Next calcRow
-        
-        ' Tao workbook moi cho phan con lai (bat ke tong la bao nhieu)
-        Set wbTarget = Workbooks.Add
-        Set wsTarget = wbTarget.Worksheets(1)
-        
-        ' Dat ten sheet giong sheet goc
-        wsTarget.Name = sheetName
-        
-        ' Copy header (3 dong dau luon luon)
-        wsSource.Rows("1:3").Copy wsTarget.Rows("1:3")
-        
-        ' Copy du lieu tu startRow den lastRow vao dong 4 cua file moi
-        wsSource.Rows(startRow & ":" & lastRow).Copy wsTarget.Range("A4")
-        
-        ' 1. Dem so dong tu P4 den cuoi cot P co du lieu, ghi vao P2
-        Dim rowCount2 As Long
-        rowCount2 = lastRow - 3 ' Tru di 3 dong header
-        wsTarget.Range("P2").Value = Format(rowCount2, "000000")
-        
-        ' 2. Them "_" + fileCounter vao cuoi o B2
-        If wsTarget.Range("B2").Value <> "" Then
-            wsTarget.Range("B2").Value = wsTarget.Range("B2").Value & "_" & fileCounter
+        If shouldSplit Then
+            currentRow = endRowForCurrentFile + 1 ' Di den cap tiep theo
+        Else
+            currentRow = currentRow + 2 ' Neu con 1 dong cuoi, di
         End If
-        
-        ' 3. Them "_" + fileCounter vao tat ca o tu B4 den cuoi cot B co du lieu
-        Dim iRow2 As Long
-        For iRow2 = 4 To lastRow
-            If wsTarget.Range("B" & iRow2).Value <> "" Then
-                wsTarget.Range("B" & iRow2).Value = wsTarget.Range("B" & iRow2).Value & "_" & fileCounter
-            End If
-        Next iRow2
-        
-        ' Dieu chinh do rong cot
-        wsTarget.Columns.AutoFit
-        
-        ' Dat ten va luu file con
-        targetFilePath = sourceFolder & sourceFileName & "_" & fileCounter & ".xlsx"
-        wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
-        wbTarget.Close False
-        
-        ' Thong bao tien trinh
-        Debug.Print "Da tao file: " & targetFilePath & " (Tong: " & Format(finalSum, "#,##0") & ")"
-        
-        fileCounter = fileCounter + 1
-    End If
+    Loop
     
     ' Dong file goc
     wbSource.Close False
