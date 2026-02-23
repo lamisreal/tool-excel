@@ -144,7 +144,7 @@ Sub SplitExcelFileByColumnPSum()
             
             ' Dat ten va luu file con
             targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
-            wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
+            wbTarget.SaveAs Filename:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
             wbTarget.Close False
             
             ' Thong bao tien trinh
@@ -155,7 +155,6 @@ Sub SplitExcelFileByColumnPSum()
             
             ' Reset cho file moi
             startRow = endRowForCurrentFile + 1
-            currentRow = endRowForCurrentFile
             sumValue = 0
             pairSum = 0
             valueZPOS = 0
@@ -164,9 +163,13 @@ Sub SplitExcelFileByColumnPSum()
             ' Chua dat nguong: them cap vao sum, tiep tuc
             sumValue = testSum
         End If
-
+        
         ' Tang dong hien tai
-        currentRow = currentRow + 2
+        If shouldSplit Then
+            currentRow = endRowForCurrentFile + 1
+        Else
+            currentRow = currentRow + 2
+        End If
     Loop
     
     ' Xu ly phan du lieu con lai (neu co)
@@ -199,7 +202,7 @@ Sub SplitExcelFileByColumnPSum()
         
         ' Dat ten va luu file con
         targetFilePath = sourceFolder & "file excel con " & fileCounter & ".xlsx"
-        wbTarget.SaveAs fileName:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
+        wbTarget.SaveAs Filename:=targetFilePath, FileFormat:=xlOpenXMLWorkbook
         wbTarget.Close False
         
         ' Thong bao tien trinh
