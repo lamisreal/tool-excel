@@ -161,7 +161,8 @@ SkipItem:
     
     ' 15)
     Dim arr As Variant
-    arr = Array("FB", "IN", "QSR", "PP", "BASIC INDUSTRIES (HEAVY)", "MANUFACTURING (LIGHT)", "MINING", "Intercompany")
+    arr = Array("FB", "IN", "QSR", "PP", "BASIC INDUSTRIES (HEAVY)", "MANUFACTURING (LIGHT)", "MINING", "Inter-Company",
+    "Downstream", "High Tech")
     Call Tao_Sheet_CRITICAL(arr)
 
     ' 16)
@@ -376,7 +377,7 @@ Private Function TenSheetSauMapping(ByVal tenHienTai As String) As String
             TenSheetSauMapping = "IN"
             Exit Function
         Case "INTERCO"
-            TenSheetSauMapping = "Intercompany"
+            TenSheetSauMapping = "Inter-Company"
             Exit Function
         Case "PAPER"
             TenSheetSauMapping = "PP"
@@ -518,7 +519,9 @@ Public Sub Tao_Pastdue_Over60Days_1()
         "BASIC INDUSTRIES (HEAVY)", _
         "MANUFACTURING (LIGHT)", _
         "MINING", _
-        "Intercompany", _
+        "Inter-Company", _
+        "Downstream", _
+        "High Tech", _
         "Total" _
     )
     For i = LBound(arrSBU) To UBound(arrSBU)
@@ -526,7 +529,7 @@ Public Sub Tao_Pastdue_Over60Days_1()
     Next i
     
     ' B2..B9: tu ten sheet o cot A -> lay gia tri cot I o dong cuoi co du lieu
-    For i = 0 To 7   ' A2..A9 (bo qua "Total")
+    For i = 0 To 9   ' A2..A9 (bo qua "Total")
         sbu = CStr(arrSBU(i))
         
         Set wsSrc = Nothing
@@ -557,11 +560,11 @@ Public Sub Tao_Pastdue_Over60Days_1()
         End If
     Next i
     
-    ' B10 = SUM(B2:B9)
-    wsPD.Range("B10").Formula = "=SUM(B2:B9)"
+    ' B12 = SUM(B2:B11)
+    wsPD.Range("B12").Formula = "=SUM(B2:B11)"
     
     ' Dinh dang so
-    wsPD.Range("B2:B10").NumberFormat = "#,##0"
+    wsPD.Range("B2:B12").NumberFormat = "#,##0"
     
     ' Can cot
     wsPD.Columns("A:B").AutoFit
@@ -615,6 +618,7 @@ Public Sub Dien_Summary_GrandTotal()
     Dim rFB As Long, rIN As Long, rInter As Long
     Dim rPP As Long, rQSR As Long, rMIN As Long
     Dim rLIGHT As Long, rHEAVY As Long
+    Dim rDownstream As Long, rHighTech As Long
     
     Set wb = ThisWorkbook
     
@@ -627,17 +631,19 @@ Public Sub Dien_Summary_GrandTotal()
         wsSum.Name = "Summary"
     End If
     
-    Call Xoa_Vung_Tu_ThamSo("Summary", "C8:G15")
+    Call Xoa_Vung_Tu_ThamSo("Summary", "C8:G17")
     
     ' Tim dong "Grand Total" tren cac sheet
     rFB = TimDongGrandTotal("FB")
     rIN = TimDongGrandTotal("IN")
-    rInter = TimDongGrandTotal("Intercompany")
+    rInter = TimDongGrandTotal("Inter-Company")
     rPP = TimDongGrandTotal("PP")
     rQSR = TimDongGrandTotal("QSR")
     rMIN = TimDongGrandTotal("MINING")
     rLIGHT = TimDongGrandTotal("MANUFACTURING (LIGHT)")
     rHEAVY = TimDongGrandTotal("BASIC INDUSTRIES (HEAVY)")
+    rDownstream = TimDongGrandTotal("Downstream")
+    rHighTech = TimDongGrandTotal("High Tech")
     
     ' === GHI CONG THUC LEN SHEET SUMMARY ===
     ' 2) Hang 8 - dung dong cua FB
@@ -654,11 +660,15 @@ Public Sub Dien_Summary_GrandTotal()
     GhiHangSummary wsSum, 13, rLIGHT, "MANUFACTURING (LIGHT)"
     ' 8) Hang 14 - dung dong cua MINING
     GhiHangSummary wsSum, 14, rMIN, "MINING"
-    ' 9) Hang 15 - dung dong cua Intercompany
-    GhiHangSummary wsSum, 15, rInter, "Intercompany"
+    ' 9) Hang 15 - dung dong cua Inter-Company
+    GhiHangSummary wsSum, 15, rInter, "Inter-Company"
+    ' 10) Hang 16 - dung dong cua Downstream
+    GhiHangSummary wsSum, 16, rDownstream, "Downstream"
+    ' 11) Hang 17 - dung dong cua High Tech
+    GhiHangSummary wsSum, 17, rHighTech, "High Tech"
     
     ' Dinh dang so (neu can)
-    wsSum.Range("C8:G15").NumberFormat = "#,##0"
+    wsSum.Range("C8:G17").NumberFormat = "#,##0"
 End Sub
 
 '--- Helper: tim dong chua chuoi "Grand Total" o cot A cua sheetName ---
@@ -949,4 +959,3 @@ Public Sub BoMau_Tab_Sheet(ByVal sheetName As String)
     If ws Is Nothing Then Exit Sub
     ws.Tab.ColorIndex = xlColorIndexNone
 End Sub
-
